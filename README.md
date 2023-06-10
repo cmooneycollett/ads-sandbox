@@ -6,7 +6,7 @@ Highlights from the ADS modules:
 
 ## Data Structures
 
-Under development.
+- Doubly-linked list: LinkedList
 
 ## Math
 
