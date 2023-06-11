@@ -4,23 +4,27 @@ use std::rc::Rc;
 
 /// An implementation of a doubly-linked list. Not thread-safe. Note that the data items contained
 /// within nodes cannot be changed after they have been added to the linked-list.
-pub struct LinkedList<'a, T: 'a> {
-    head: Link<'a, T>,
-    tail: Link<'a, T>,
+pub struct LinkedList<T> {
+    head: Link<T>,
+    tail: Link<T>,
+    len: usize,
 }
 
-impl<'a, T: Clone> LinkedList<'a, T> {
+impl<T> LinkedList<T> {
     /// Creates an empty LinkedList.
-    pub fn new() -> LinkedList<'a, T> {
+    pub fn new() -> LinkedList<T> {
         LinkedList {
             head: None,
             tail: None,
+            len: 0,
         }
     }
 
     /// Pushes the data item to the end of the LinkedList.
     pub fn push(&mut self, data: T) {
         let new_node: Link<T> = Node::new_link(data);
+        // Increase the len counter
+        self.len += 1;
         // Handle case for empty list
         if self.head.is_none() && self.tail.is_none() {
             self.head = new_node.clone();
@@ -36,6 +40,8 @@ impl<'a, T: Clone> LinkedList<'a, T> {
     /// Pushes the data item to the front of the LinkedList.
     pub fn push_front(&mut self, data: T) {
         let new_node: Link<T> = Node::new_link(data);
+        // Increase the len counter
+        self.len += 1;
         // Handle case for empty list
         if self.head.is_none() && self.tail.is_none() {
             self.head = new_node.clone();
@@ -50,7 +56,7 @@ impl<'a, T: Clone> LinkedList<'a, T> {
 
     /// Removes the last node from the LinkedList. Returns an Option containing the value from the
     /// removed node, otherwise None.
-    pub fn pop(&mut self) -> Option<T> {
+    pub fn pop(&mut self) -> Option<Rc<T>> {
         // Handle case for empty list
         if self.head.is_none() && self.tail.is_none() {
             return None;
@@ -60,38 +66,31 @@ impl<'a, T: Clone> LinkedList<'a, T> {
         self.tail = old_tail.as_ref().unwrap().borrow().get_prev();
         self.tail.as_ref().unwrap().borrow_mut().set_next(&None);
         let old_data = old_tail.as_ref().unwrap().borrow().get_data();
+        // Decrease the len counter
+        self.len -= 1;
         Some(old_data)
     }
 
     /// Removes the first node from the LinkedList. Returns an Option containing the value from the
     /// removed node, otherwise None.
-    pub fn pop_front(&mut self) -> Option<T> {
+    pub fn pop_front(&mut self) -> Option<Rc<T>> {
         // Handle case for empty list
         if self.head.is_none() && self.tail.is_none() {
             return None;
         }
         // Update the head to be the second node and return value contained in removed node
-        let old_data = self.head.as_ref().unwrap().borrow().get_data();
         let old_head = self.head.clone();
         self.head = old_head.as_ref().unwrap().borrow().get_next();
         self.head.as_ref().unwrap().borrow_mut().set_prev(&None);
+        let old_data = old_head.as_ref().unwrap().borrow().get_data();
+        // Decrease the len counter
+        self.len -= 1;
         Some(old_data)
     }
 
     /// Returns the number of items contained in the LinkedList.
     pub fn len(&self) -> usize {
-        let mut len: usize = 0;
-        // Handle case for empty list
-        if self.head.is_none() {
-            return 0;
-        }
-        // Proceed through nodes until final node has been counted
-        let mut cursor: Link<T> = self.head.clone();
-        while cursor.is_some() {
-            len += 1;
-            cursor = cursor.unwrap().borrow().get_next();
-        }
-        len
+        self.len
     }
 
     /// Checks if the LinkedList is empty.
@@ -100,21 +99,21 @@ impl<'a, T: Clone> LinkedList<'a, T> {
     }
 
     /// Creates an iterator over the LinkedList.
-    pub fn iter(&self) -> LinkedListIter<'a, T> {
+    pub fn iter(&self) -> LinkedListIter<T> {
         LinkedListIter::new(&self.head)
     }
 }
 
-impl<'a, T: Clone> Default for LinkedList<'a, T> {
+impl<T> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a, T: Clone> IntoIterator for LinkedList<'a, T> {
-    type Item = T;
+impl<T> IntoIterator for LinkedList<T> {
+    type Item = Rc<T>;
 
-    type IntoIter = LinkedListIter<'a, T>;
+    type IntoIter = LinkedListIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -122,73 +121,73 @@ impl<'a, T: Clone> IntoIterator for LinkedList<'a, T> {
 }
 
 /// Represents a link from one node to another before or after it.
-type Link<'a, T> = Option<Rc<RefCell<Box<Node<'a, T>>>>>;
+type Link<T> = Option<Rc<RefCell<Box<Node<T>>>>>;
 
 /// A node containing a data item and links to
-struct Node<'a, T: 'a> {
-    data: T,
-    prev: Link<'a, T>,
-    next: Link<'a, T>,
+struct Node<T> {
+    data: Rc<T>,
+    prev: Link<T>,
+    next: Link<T>,
 }
 
-impl<'a, T: Clone> Node<'a, T> {
+impl<T> Node<T> {
     /// Creates a new Node containing the given data item. The previous and next node links are set
     /// to None.
-    fn new(data: T) -> Node<'a, T> {
+    fn new(data: T) -> Node<T> {
         Node {
-            data,
+            data: Rc::new(data),
             prev: None,
             next: None,
         }
     }
 
     /// Updates the previous node.
-    fn set_prev(&mut self, other: &Link<'a, T>) {
+    fn set_prev(&mut self, other: &Link<T>) {
         self.prev = other.clone();
     }
 
     /// Updates the next node.
-    fn set_next(&mut self, other: &Link<'a, T>) {
+    fn set_next(&mut self, other: &Link<T>) {
         self.next = other.clone();
     }
 
     /// Gets the previous link from the Node via cloning.
-    fn get_prev(&self) -> Link<'a, T> {
+    fn get_prev(&self) -> Link<T> {
         self.prev.clone()
     }
 
     /// Gets the next link from the Node via cloning.
-    fn get_next(&self) -> Link<'a, T> {
+    fn get_next(&self) -> Link<T> {
         self.next.clone()
     }
 
     /// Gets the data item contained within the Node via cloning.
-    fn get_data(&self) -> T {
+    fn get_data(&self) -> Rc<T> {
         self.data.clone()
     }
 
     /// Creates a new Link containing the given data item.
-    fn new_link(data: T) -> Link<'a, T> {
+    fn new_link(data: T) -> Link<T> {
         Some(Rc::new(RefCell::new(Box::new(Node::new(data)))))
     }
 }
 
 /// Wrapper struct for LinkedList to implement the Iterator trait. Yields cloned values contained in
 /// the nodes of the LinkedList.
-pub struct LinkedListIter<'a, T: 'a> {
-    cursor: Link<'a, T>,
+pub struct LinkedListIter<T> {
+    cursor: Link<T>,
 }
 
-impl<'a, T: Clone> LinkedListIter<'a, T> {
-    fn new(cursor: &Link<'a, T>) -> LinkedListIter<'a, T> {
+impl<T> LinkedListIter<T> {
+    fn new(cursor: &Link<T>) -> LinkedListIter<T> {
         LinkedListIter {
             cursor: cursor.clone(),
         }
     }
 }
 
-impl<'a, T: Clone> Iterator for LinkedListIter<'a, T> {
-    type Item = T;
+impl<T> Iterator for LinkedListIter<T> {
+    type Item = Rc<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Check if the iterator has been exhausted
@@ -201,7 +200,7 @@ impl<'a, T: Clone> Iterator for LinkedListIter<'a, T> {
     }
 }
 
-impl<'a, T: Clone> FusedIterator for LinkedListIter<'a, T> {}
+impl<T> FusedIterator for LinkedListIter<T> {}
 
 #[cfg(test)]
 mod tests {
@@ -234,7 +233,10 @@ mod tests {
         for &i in values.iter() {
             new_list.push(i);
         }
-        let values_from_list = new_list.iter().collect::<Vec<i32>>();
+        let values_from_list = new_list
+            .iter()
+            .map(|val| *val.as_ref())
+            .collect::<Vec<i32>>();
         assert_eq!(values, values_from_list);
     }
 
@@ -245,7 +247,10 @@ mod tests {
         for &i in values.iter() {
             new_list.push_front(i)
         }
-        let values_from_list = new_list.iter().collect::<Vec<i32>>();
+        let values_from_list = new_list
+            .iter()
+            .map(|val| *val.as_ref())
+            .collect::<Vec<i32>>();
         let values = values.iter().rev().copied().collect::<Vec<i32>>();
         assert_eq!(values, values_from_list);
     }
@@ -270,7 +275,10 @@ mod tests {
         for s in &strings {
             new_list.push(s);
         }
-        let strings_from_list = new_list.iter().collect::<Vec<&str>>();
+        let strings_from_list = new_list
+            .iter()
+            .map(|val| *val.as_ref())
+            .collect::<Vec<&str>>();
         assert_eq!(strings, strings_from_list);
     }
 
@@ -283,7 +291,7 @@ mod tests {
         }
         let mut values_from_list: Vec<i32> = vec![];
         for i in new_list {
-            values_from_list.push(i);
+            values_from_list.push(*i);
         }
         assert_eq!(values, values_from_list);
     }
@@ -304,5 +312,19 @@ mod tests {
             new_list.push(i);
         }
         assert_eq!(new_list.len(), 10000000);
+    }
+
+    #[test]
+    fn test_array_push() {
+        let mut new_list = LinkedList::<[i32; 3]>::new();
+        let arrays: Vec<[i32; 3]> = vec![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+        for &a in arrays.iter() {
+            new_list.push(a);
+        }
+        let arrays_from_list = new_list
+            .iter()
+            .map(|a| *a.as_ref())
+            .collect::<Vec<[i32; 3]>>();
+        assert_eq!(arrays, arrays_from_list);
     }
 }
