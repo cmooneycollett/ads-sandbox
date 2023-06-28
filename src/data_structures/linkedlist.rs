@@ -123,7 +123,7 @@ impl<T> IntoIterator for LinkedList<T> {
 /// Represents a link from one node to another before or after it.
 type Link<T> = Option<Rc<RefCell<Box<Node<T>>>>>;
 
-/// A node containing a data item and links to
+/// A node containing a data item and links to previous and next nodes.
 struct Node<T> {
     data: Rc<T>,
     prev: Link<T>,
