@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::iter::FusedIterator;
 use std::rc::Rc;
 
-/// An implementation of a doubly-linked list. Not thread-safe. Note that the data items contained
+/// An implementation of a doubly linked-list. Not thread-safe. Note that the data items contained
 /// within nodes cannot be changed after they have been added to the linked-list.
 pub struct LinkedList<T> {
     head: Link<T>,
@@ -54,7 +54,7 @@ impl<T> LinkedList<T> {
         self.head = new_node;
     }
 
-    /// Removes the last node from the LinkedList. Returns an Option containing the value from the
+    /// Removes the last node from the LinkedList. Returns Some containing the value from the
     /// removed node, otherwise None.
     pub fn pop(&mut self) -> Option<Rc<T>> {
         // Handle case for empty list
@@ -71,14 +71,14 @@ impl<T> LinkedList<T> {
         Some(old_data)
     }
 
-    /// Removes the first node from the LinkedList. Returns an Option containing the value from the
+    /// Removes the first node from the LinkedList. Returns Some containing the value from the
     /// removed node, otherwise None.
     pub fn pop_front(&mut self) -> Option<Rc<T>> {
         // Handle case for empty list
         if self.head.is_none() && self.tail.is_none() {
             return None;
         }
-        // Update the head to be the second node and return value contained in removed node
+        // Update head to be second node and return value contained in removed node
         let old_head = self.head.clone();
         self.head = old_head.as_ref().unwrap().borrow().get_next();
         self.head.as_ref().unwrap().borrow_mut().set_prev(&None);
@@ -95,7 +95,7 @@ impl<T> LinkedList<T> {
 
     /// Checks if the LinkedList is empty.
     pub fn is_empty(&self) -> bool {
-        self.head.is_none() && self.tail.is_none()
+        self.len == 0
     }
 
     /// Creates an iterator over the LinkedList.
