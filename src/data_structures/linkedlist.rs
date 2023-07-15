@@ -207,6 +207,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_push_and_pop() {
+        let mut new_list = LinkedList::<i32>::new();
+        new_list.push(0);
+        new_list.pop();
+        assert_eq!(new_list.len(), 0);
+    }
+
+    #[test]
     fn test_push_back_length() {
         let mut new_list = LinkedList::<i32>::new();
         let values = (0..10).collect::<Vec<i32>>();
