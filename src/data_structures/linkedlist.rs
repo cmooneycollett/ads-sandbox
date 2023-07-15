@@ -63,9 +63,15 @@ impl<T> LinkedList<T> {
         }
         // Update the tail to be the second-last node and return value contained in removed node
         let old_tail = self.tail.clone();
-        self.tail = old_tail.as_ref().unwrap().borrow().get_prev();
-        self.tail.as_ref().unwrap().borrow_mut().set_next(&None);
         let old_data = old_tail.as_ref().unwrap().borrow().get_data();
+        // Update head and tail
+        if self.len() == 1 {
+            self.head = None;
+            self.tail = None;
+        } else {
+            self.tail = old_tail.as_ref().unwrap().borrow().get_prev();
+            self.tail.as_ref().unwrap().borrow_mut().set_next(&None);
+        }
         // Decrease the len counter
         self.len -= 1;
         Some(old_data)
@@ -80,9 +86,15 @@ impl<T> LinkedList<T> {
         }
         // Update head to be second node and return value contained in removed node
         let old_head = self.head.clone();
-        self.head = old_head.as_ref().unwrap().borrow().get_next();
-        self.head.as_ref().unwrap().borrow_mut().set_prev(&None);
         let old_data = old_head.as_ref().unwrap().borrow().get_data();
+        // Update head and tail
+        if self.len == 1 {
+            self.head = None;
+            self.tail = None;
+        } else {
+            self.head = old_head.as_ref().unwrap().borrow().get_next();
+            self.head.as_ref().unwrap().borrow_mut().set_prev(&None);
+        }
         // Decrease the len counter
         self.len -= 1;
         Some(old_data)
@@ -205,6 +217,38 @@ impl<T> FusedIterator for LinkedListIter<T> {}
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_push_and_pop() {
+        let mut new_list = LinkedList::<i32>::new();
+        new_list.push(1);
+        let _ = new_list.pop();
+        assert_eq!(new_list.len(), 0);
+    }
+
+    #[test]
+    fn test_push_front_and_pop_front() {
+        let mut new_list = LinkedList::<i32>::new();
+        new_list.push_front(1);
+        let _ = new_list.pop_front();
+        assert_eq!(new_list.len(), 0);
+    }
+
+    #[test]
+    fn test_push_front_and_pop() {
+        let mut new_list = LinkedList::<i32>::new();
+        new_list.push_front(1);
+        let _ = new_list.pop();
+        assert_eq!(new_list.len(), 0);
+    }
+
+    #[test]
+    fn test_push_and_pop_front() {
+        let mut new_list = LinkedList::<i32>::new();
+        new_list.push(1);
+        let _ = new_list.pop_front();
+        assert_eq!(new_list.len(), 0);
+    }
 
     #[test]
     fn test_push_back_length() {
