@@ -133,7 +133,7 @@ impl<T> IntoIterator for LinkedList<T> {
 }
 
 /// Represents a link from one node to another before or after it.
-type Link<T> = Option<Rc<RefCell<Box<Node<T>>>>>;
+type Link<T> = Option<Rc<RefCell<Node<T>>>>;
 
 /// A node containing a data item and links to previous and next nodes.
 struct Node<T> {
@@ -180,7 +180,7 @@ impl<T> Node<T> {
 
     /// Creates a new Link containing the given data item.
     fn new_link(data: T) -> Link<T> {
-        Some(Rc::new(RefCell::new(Box::new(Node::new(data)))))
+        Some(Rc::new(RefCell::new(Node::new(data))))
     }
 }
 
